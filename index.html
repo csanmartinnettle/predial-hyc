@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Administración Predial - H&amp;C</title>
+<meta name="description" content="Reportes de visitas a terrenos de H&amp;C Inversiones">
+<meta name="theme-color" content="#1b223d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon-48.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Predial H&amp;C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+</head>
+<body>
+
+<header class="bar"><div class="bar-in">
+  <button class="back" id="back" hidden aria-label="Volver">‹</button>
+  <img class="logo" id="logoImg" src="icons/logo.png" alt="H&amp;C" width="36" height="36">
+  <div class="brand" id="brand">Administración Predial</div>
+  <button class="iconbtn" id="adminBtn" hidden aria-label="Administración">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+  </button>
+</div></header>
+
+<!-- INICIO -->
+<main class="wrap" id="vHome" hidden>
+  <div>
+    <p class="eyebrow">Administración Predial · H&amp;C</p>
+    <h1>Terrenos</h1>
+    <p class="sub">Elige un terreno para registrar una visita o ver sus reportes.</p>
+  </div>
+  <div class="notice warn" id="pendNote" hidden></div>
+  <div class="notice warn install" id="installNote" hidden>
+    <span id="installTxt"></span>
+    <button class="btn small" id="installBtn" hidden>Instalar</button>
+    <button class="linkbtn" id="installHide" type="button">Ocultar</button>
+  </div>
+  <div class="list" id="lots"><div class="empty">Cargando terrenos…</div></div>
+  <form class="add" id="addForm" autocomplete="off">
+    <input id="newLot" placeholder="Nombre del nuevo terreno" aria-label="Nombre del nuevo terreno" maxlength="60">
+    <button class="btn" type="submit">Agregar</button>
+  </form>
+  <div class="who"><span>Reportes firmados por <b id="whoName"></b></span><button class="linkbtn" id="changeName" type="button">Cambiar</button></div>
+</main>
+
+<!-- TERRENO -->
+<main class="wrap" id="vLot" hidden>
+  <div>
+    <h1 id="lotName">Terreno</h1>
+    <p class="sub" id="lotSub"></p>
+  </div>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tabVisit" aria-selected="true">Nueva visita</button>
+    <button role="tab" id="tabReps" aria-selected="false">Reportes</button>
+  </div>
+
+  <div id="pVisit" class="sec" style="gap:22px">
+    <section class="sec">
+      <h2><b>1</b> Fotos</h2>
+      <div class="shoot">
+        <label><input type="file" id="cam" accept="image/*" capture="environment"><span class="btn cam">📷 Tomar foto</span></label>
+        <label><input type="file" id="gal" accept="image/*" multiple><span class="btn quiet cam" style="font-size:15px">Galería</span></label>
+      </div>
+      <div class="thumbs" id="thumbs"></div>
+      <p class="hint" id="photoHint"></p>
+    </section>
+    <section class="sec">
+      <h2><b>2</b> Reporte</h2>
+      <div class="card" id="survey"></div>
+    </section>
+    <section class="sec">
+      <h2><b>3</b> Observaciones</h2>
+      <textarea id="obs" placeholder="Escribe lo que observaste en el terreno…"></textarea>
+    </section>
+  </div>
+
+  <div id="pReps" class="sec" hidden></div>
+</main>
+
+<!-- ADMINISTRACIÓN -->
+<main class="wrap" id="vAdmin" hidden>
+  <div>
+    <p class="eyebrow">Solo administradores</p>
+    <h1>Administración</h1>
+  </div>
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tabQ" aria-selected="true">Preguntas</button>
+    <button role="tab" id="tabU" aria-selected="false">Usuarios</button>
+  </div>
+  <div id="pQ" class="sec">
+    <p class="sub">Los cambios llegan a todos los teléfonos al instante. Los reportes ya enviados conservan las preguntas que tenían el día de la visita.</p>
+    <div class="card qa" id="qList"></div>
+    <button class="btn ghost" id="addQ">+ Agregar pregunta</button>
+  </div>
+  <div id="pU" class="sec" hidden>
+    <p class="sub">Personas que han entrado a la app. Un administrador puede editar preguntas y nombrar a otros administradores.</p>
+    <div class="card" id="uList"></div>
+  </div>
+</main>
+
+<div class="actionbar" id="actionbar" hidden><div class="actionbar-in">
+  <button class="btn" id="finish">Finalizar y enviar</button>
+  <div class="confirm" id="confirm" hidden>
+    <button class="btn quiet" id="cancelSend">Seguir editando</button>
+    <button class="btn" id="doSend">Confirmar envío</button>
+  </div>
+  <div class="saved" id="savedTxt">El borrador se guarda en este teléfono.</div>
+</div></div>
+
+<!-- Bienvenida / nombre -->
+<div class="onboard" id="onboard" hidden><form class="onboard-in" id="nameForm" autocomplete="off">
+  <img src="icons/logo.png" alt="" width="64" height="64">
+  <p class="eyebrow">Administración Predial · H&amp;C</p>
+  <h1>Bienvenido</h1>
+  <p class="sub">Escribe tu nombre y apellido. Quedará como firma en cada reporte que generes desde este teléfono.</p>
+  <label class="field">Nombre y apellido<input id="userName" maxlength="60" autocomplete="name" required></label>
+  <label class="field" id="codeField">Código de acceso de H&amp;C<input id="accessCode" maxlength="40" autocomplete="off" autocapitalize="off" required></label>
+  <button class="btn" type="submit" id="nameBtn">Continuar</button>
+  <p class="hint" id="nameErr"></p>
+</form></div>
+
+<!-- Hoja: editar pregunta -->
+<div class="sheet" id="qSheet" hidden><form class="sheet-in" id="qForm">
+  <h3 id="qSheetT">Pregunta</h3>
+  <label class="field">Pregunta<input id="qText" maxlength="120" required></label>
+  <label class="field">Tipo de respuesta
+    <select id="qType">
+      <option value="scale">Escala del 1 al 5</option>
+      <option value="yn">Sí / No</option>
+      <option value="text">Texto libre</option>
+    </select>
+  </label>
+  <div class="two" id="qEnds">
+    <label class="field">Significado del 1<input id="qLo" maxlength="30" placeholder="Muy malo"></label>
+    <label class="field">Significado del 5<input id="qHi" maxlength="30" placeholder="Muy bueno"></label>
+  </div>
+  <label class="check"><input type="checkbox" id="qReq" checked> Obligatoria para enviar</label>
+  <button class="btn" type="submit">Guardar pregunta</button>
+  <button class="btn quiet" type="button" id="qCancel">Cancelar</button>
+</form></div>
+
+<!-- Hoja: compartir -->
+<div class="sheet" id="shSheet" hidden><div class="sheet-in">
+  <h3 id="shT">Reporte listo</h3>
+  <p class="sub" id="shSub">Elige cómo enviarlo.</p>
+  <button class="btn" id="shNative">Compartir PDF (WhatsApp, correo…)</button>
+  <button class="btn quiet" id="shDownload">Descargar PDF</button>
+  <a class="btn quiet" id="shWa" target="_blank" rel="noopener">Enviar resumen por WhatsApp</a>
+  <button class="btn quiet" id="shClose">Cerrar</button>
+</div></div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
