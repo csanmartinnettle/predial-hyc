@@ -38,6 +38,9 @@ jobs:
       - name: Armar la app web
         run: set -o pipefail; npm run build 2>&1 | tee ../step.log
 
+      - name: Empaquetar versión web (iPhone)
+        run: cd www && zip -qr ../Predial-HyC-web.zip .
+
       - name: Crear proyecto Android
         run: |
           set -o pipefail
@@ -77,6 +80,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v$VERSION" Predial-HyC.apk \
+          gh release create "v$VERSION" Predial-HyC.apk Predial-HyC-web.zip \
             --title "Predial H&C $VERSION" \
             --notes "Descarga **Predial-HyC.apk** en el teléfono Android y ábrelo para instalar o actualizar la app."
