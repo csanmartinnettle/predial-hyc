@@ -4,21 +4,5 @@
   "webDir": "www",
   "android": {
     "backgroundColor": "#1b223d"
-  },
-  "server": {
-    "androidScheme": "https",
-    "hostname": "localhost",
-    "allowNavigation": [
-      "login.microsoftonline.com",
-      "login.microsoft.com",
-      "login.live.com",
-      "*.microsoftonline.com",
-      "*.microsoftonline-p.com",
-      "*.msauth.net",
-      "*.msftauth.net",
-      "*.microsoft.com",
-      "*.live.com",
-      "autologon.microsoftazuread-sso.com"
-    ]
   }
 }

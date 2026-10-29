@@ -8,7 +8,6 @@
     "build": "node build.mjs"
   },
   "dependencies": {
-    "@azure/msal-browser": "^3.20.0",
     "@capacitor/android": "^6.1.2",
     "@capacitor/core": "^6.1.2",
     "@capacitor/filesystem": "^6.0.1",
