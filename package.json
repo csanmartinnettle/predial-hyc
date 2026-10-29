@@ -1,0 +1,25 @@
+{
+  "name": "predial-hyc",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Administración Predial - H&C",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/filesystem": "^6.0.1",
+    "@capacitor/share": "^6.0.2",
+    "@capacitor/status-bar": "^6.0.1",
+    "@fontsource/outfit": "^5.0.14",
+    "firebase": "^10.12.2",
+    "jspdf": "^2.5.1"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.1.2",
+    "esbuild": "^0.23.0"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "appId": "cl.hycinversiones.predial",
+  "appName": "Predial H&C",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#1b223d"
+  }
+}

@@ -3,12 +3,25 @@
    Datos: Firebase (Auth anónima + Firestore con caché sin conexión). */
 
 import { firebaseConfig } from "./firebase-config.js";
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { initializeApp } from "firebase/app";
+import { initializeAuth, indexedDBLocalPersistence, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
   collection, doc, getDoc, getDocs, setDoc, updateDoc, writeBatch, onSnapshot, query, orderBy, limit
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+} from "firebase/firestore";
+import { jsPDF } from "jspdf";
+import { Capacitor } from "@capacitor/core";
+import { Share } from "@capacitor/share";
+import { Filesystem, Directory } from "@capacitor/filesystem";
+import { StatusBar, Style } from "@capacitor/status-bar";
+import "./fonts.css";
+
+const NATIVE = Capacitor.isNativePlatform();
+if (NATIVE) {
+  document.documentElement.classList.add("native");
+  StatusBar.setBackgroundColor({ color: "#1b223d" }).catch(() => { });
+  StatusBar.setStyle({ style: Style.Dark }).catch(() => { });
+}
 
 /* ---------- constantes ---------- */
 const MAX_FOTOS = 8;
@@ -98,7 +111,7 @@ if (!firebaseConfig || !firebaseConfig.apiKey || firebaseConfig.apiKey.startsWit
   throw new Error("firebase-config.js sin completar");
 }
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+const auth = initializeAuth(app, { persistence: indexedDBLocalPersistence });
 const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
 
 onAuthStateChanged(auth, async user => {
@@ -390,8 +403,7 @@ function renderReps() {
 
 /* ---------- PDF ---------- */
 async function buildPdf(r) {
-  if (!window.jspdf) throw new Error("jspdf");
-  const { jsPDF } = window.jspdf; const doc_ = new jsPDF({ unit: "mm", format: "a4" });
+  const doc_ = new jsPDF({ unit: "mm", format: "a4" });
   const W = 210, M = 16; let y;
   const navy = [27, 34, 61], grey = [103, 103, 103], gold = [181, 128, 106];
   const pdf = doc_;
@@ -480,24 +492,46 @@ async function prepareShare(r, btn) {
     const blob = await buildPdf(r);
     const file = new File([blob], repName(r) + ".pdf", { type: "application/pdf" });
     S.share = { r, file, blob };
-    const canShare = !!(navigator.canShare && navigator.canShare({ files: [file] }));
+    const canShare = NATIVE || !!(navigator.canShare && navigator.canShare({ files: [file] }));
     $("shNative").hidden = !canShare;
     $("shT").textContent = repName(r);
     $("shSub").textContent = canShare ? "Elige cómo enviarlo. Al compartir, el PDF va adjunto." : "Este teléfono no permite adjuntar el PDF directamente: descárgalo y compártelo desde tus archivos.";
+    $("shDownload").textContent = NATIVE ? "Guardar PDF en el teléfono" : "Descargar PDF";
     $("shWa").href = "https://wa.me/?text=" + encodeURIComponent(shareText(r));
     $("shSheet").hidden = false;
   } catch (e) {
     console.error(e);
-    toast(e && e.message === "jspdf" ? "No se pudo cargar el generador de PDF. Abre la app con señal una vez para que quede guardado." : "No se pudo generar el PDF. Si el reporte tiene fotos, se necesita señal la primera vez.");
+    toast("No se pudo generar el PDF. Si el reporte tiene fotos, se necesita señal la primera vez que se abre.");
   } finally { btn.disabled = false; btn.textContent = old; }
 }
 $("shNative").onclick = async () => {
   const s = S.share; if (!s) return;
-  try { await navigator.share({ files: [s.file], title: repName(s.r), text: "Reporte de visita " + repName(s.r) }); $("shSheet").hidden = true; }
-  catch (e) { if (e && e.name !== "AbortError") toast("No se pudo abrir el menú de compartir. Usa Descargar PDF."); }
+  try {
+    if (NATIVE) {
+      const w = await Filesystem.writeFile({ path: s.file.name, data: await blobToBase64(s.blob), directory: Directory.Cache });
+      await Share.share({ title: repName(s.r), text: "Reporte de visita " + repName(s.r), files: [w.uri], dialogTitle: "Compartir reporte" });
+    } else {
+      await navigator.share({ files: [s.file], title: repName(s.r), text: "Reporte de visita " + repName(s.r) });
+    }
+    $("shSheet").hidden = true;
+  }
+  catch (e) {
+    const msg = String(e && (e.message || e.name) || "");
+    if (!/cancel|abort/i.test(msg)) toast("No se pudo abrir el menú de compartir. Usa Descargar PDF.");
+  }
 };
-$("shDownload").onclick = () => {
+function blobToBase64(blob) {
+  return new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(",")[1]); fr.onerror = no; fr.readAsDataURL(blob); });
+}
+$("shDownload").onclick = async () => {
   const s = S.share; if (!s) return;
+  if (NATIVE) {
+    try {
+      await Filesystem.writeFile({ path: "Predial HyC/" + s.file.name, data: await blobToBase64(s.blob), directory: Directory.Documents, recursive: true });
+      toast("PDF guardado en Documentos › Predial HyC.");
+    } catch (e) { toast("No se pudo guardar en el teléfono. Usa Compartir y elige Guardar en Drive."); }
+    return;
+  }
   const url = URL.createObjectURL(s.blob); const a = document.createElement("a");
   a.href = url; a.download = s.file.name; document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
@@ -595,21 +629,21 @@ let deferredPrompt = null;
 const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
 const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 let installDismissed = false; try { installDismissed = localStorage.getItem("hyc_install_ok") === "1"; } catch (e) { }
-addEventListener("beforeinstallprompt", e => {
+if (!NATIVE) addEventListener("beforeinstallprompt", e => {
   e.preventDefault(); deferredPrompt = e;
   if (!standalone && !installDismissed) { $("installTxt").textContent = "Instala la app en este teléfono para abrirla desde su ícono."; $("installBtn").hidden = false; $("installNote").hidden = false; }
 });
 $("installBtn").onclick = async () => {
   if (!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; $("installNote").hidden = true;
 };
-if (isIOS && !standalone && !installDismissed) {
+if (!NATIVE && isIOS && !standalone && !installDismissed) {
   $("installTxt").textContent = "Para instalarla: toca el botón Compartir de Safari y luego “Agregar a inicio”.";
   $("installNote").hidden = false;
 }
 $("installHide").onclick = () => { $("installNote").hidden = true; try { localStorage.setItem("hyc_install_ok", "1"); } catch (e) { } };
 
 /* ---------- service worker (funciona sin señal y se actualiza solo) ---------- */
-if ("serviceWorker" in navigator) {
+if (!NATIVE && "serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").then(reg => {
     reg.addEventListener("updatefound", () => {
       const nw = reg.installing;

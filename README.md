@@ -1,12 +1,14 @@
 # Administración Predial - H&C
 
-App instalable (Android y iPhone) para registrar visitas a terrenos: fotos, reporte, observaciones y PDF firmado por quien lo genera.
+App Android para registrar visitas a terrenos: fotos, reporte, observaciones y PDF firmado por quien lo genera.
 
-## Puesta en marcha
-1. **Firebase** (datos): crea el proyecto, activa Authentication › Anónimo y Firestore, y crea el documento `privado/acceso` con el campo `codigo`.
-2. **Reglas:** en Firestore › Reglas, pega el contenido de [`firebase/firestore.rules`](firebase/firestore.rules) y publica.
-3. **Configuración:** edita [`firebase-config.js`](firebase-config.js) con los datos de tu app web de Firebase.
-4. **Dominio autorizado:** en Authentication › Configuración › Dominios autorizados, agrega `csanmartinnettle.github.io`.
-5. **Publicación:** GitHub Pages publica la rama `main`. Cada cambio que se sube aquí llega solo a los teléfonos.
+## Descargar la app
+Entra a **[Releases](../../releases/latest)** y descarga **Predial-HyC.apk** en el teléfono. Ábrelo para instalar (o actualizar).
+Cada cambio que se sube a la rama `main` genera automáticamente un APK nuevo.
 
-La guía completa está en el documento "Guía de instalación · Administración Predial H&C".
+## Estructura
+- `web/` — código de la app (pantallas, reporte, PDF). `web/firebase-config.js` lleva los datos del proyecto Firebase.
+- `firebase/firestore.rules` — reglas de seguridad; se pegan en Firebase › Firestore › Reglas.
+- `assets/` — ícono y pantalla de inicio de H&C.
+- `.github/workflows/android.yml` — compila y firma el APK en GitHub.
+- `android-signing/` — llave con la que se firma el APK. Mantén el repositorio **privado**; si se pierde la llave, el teléfono no aceptará actualizaciones y habrá que reinstalar.
