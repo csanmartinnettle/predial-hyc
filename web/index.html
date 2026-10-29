@@ -35,6 +35,8 @@
     <p class="sub">Elige un terreno para registrar una visita o ver sus reportes.</p>
   </div>
   <div class="notice warn" id="pendNote" hidden></div>
+  <div class="notice err" id="authNote" hidden><span>Tu sesión de Microsoft venció. Los reportes quedan guardados en el teléfono hasta que vuelvas a entrar.</span><button class="btn small" id="reloginBtn">Entrar de nuevo</button></div>
+  <div class="notice err" id="errNote" hidden></div>
   <div class="notice warn install" id="installNote" hidden>
     <span id="installTxt"></span>
     <button class="btn small" id="installBtn" hidden>Instalar</button>
@@ -45,7 +47,7 @@
     <input id="newLot" placeholder="Nombre del nuevo terreno" aria-label="Nombre del nuevo terreno" maxlength="60">
     <button class="btn" type="submit">Agregar</button>
   </form>
-  <div class="who"><span>Reportes firmados por <b id="whoName"></b></span><button class="linkbtn" id="changeName" type="button">Cambiar</button></div>
+  <div class="who"><span>Reportes firmados por <b id="whoName"></b></span><button class="linkbtn" id="logoutBtn" type="button">Cerrar sesión</button></div>
 </main>
 
 <!-- TERRENO -->
@@ -90,16 +92,20 @@
   </div>
   <div class="tabs" role="tablist">
     <button role="tab" id="tabQ" aria-selected="true">Preguntas</button>
-    <button role="tab" id="tabU" aria-selected="false">Usuarios</button>
+    <button role="tab" id="tabU" aria-selected="false">Administradores</button>
   </div>
   <div id="pQ" class="sec">
-    <p class="sub">Los cambios llegan a todos los teléfonos al instante. Los reportes ya enviados conservan las preguntas que tenían el día de la visita.</p>
+    <p class="sub">Los cambios llegan a todos los teléfonos la próxima vez que abren la app con señal. Los reportes ya enviados conservan las preguntas que tenían el día de la visita.</p>
     <div class="card qa" id="qList"></div>
     <button class="btn ghost" id="addQ">+ Agregar pregunta</button>
   </div>
   <div id="pU" class="sec" hidden>
-    <p class="sub">Personas que han entrado a la app. Un administrador puede editar preguntas y nombrar a otros administradores.</p>
+    <p class="sub">Los administradores pueden editar las preguntas y nombrar a otros administradores. Escribe su correo de Microsoft de H&amp;C.</p>
     <div class="card" id="uList"></div>
+    <form class="add" id="addAdmin" autocomplete="off">
+      <input id="adminEmail" type="email" placeholder="nombre@hycinversiones.cl" aria-label="Correo del nuevo administrador">
+      <button class="btn" type="submit">Agregar</button>
+    </form>
   </div>
 </main>
 
@@ -113,16 +119,14 @@
 </div></div>
 
 <!-- Bienvenida / nombre -->
-<div class="onboard" id="onboard" hidden><form class="onboard-in" id="nameForm" autocomplete="off">
+<div class="onboard" id="onboard" hidden><div class="onboard-in">
   <img src="icons/logo.png" alt="" width="64" height="64">
   <p class="eyebrow">Administración Predial · H&amp;C</p>
   <h1>Bienvenido</h1>
-  <p class="sub">Escribe tu nombre y apellido. Quedará como firma en cada reporte que generes desde este teléfono.</p>
-  <label class="field">Nombre y apellido<input id="userName" maxlength="60" autocomplete="name" required></label>
-  <label class="field" id="codeField">Código de acceso de H&amp;C<input id="accessCode" maxlength="40" autocomplete="off" autocapitalize="off" required></label>
-  <button class="btn" type="submit" id="nameBtn">Continuar</button>
-  <p class="hint" id="nameErr"></p>
-</form></div>
+  <p class="sub" id="loginTxt">Entra con tu cuenta de Microsoft de H&amp;C (por ejemplo nombre@hycinversiones.cl). Tu nombre quedará como firma en los reportes que generes.</p>
+  <button class="btn" type="button" id="loginBtn">Entrar con Microsoft</button>
+  <p class="hint" id="loginErr"></p>
+</div></div>
 
 <!-- Hoja: editar pregunta -->
 <div class="sheet" id="qSheet" hidden><form class="sheet-in" id="qForm">
@@ -151,6 +155,7 @@
   <button class="btn" id="shNative">Compartir PDF (WhatsApp, correo…)</button>
   <button class="btn quiet" id="shDownload">Descargar PDF</button>
   <a class="btn quiet" id="shWa" target="_blank" rel="noopener">Enviar resumen por WhatsApp</a>
+  <a class="btn quiet" id="shSp" target="_blank" rel="noopener" hidden>Abrir carpeta en SharePoint</a>
   <button class="btn quiet" id="shClose">Cerrar</button>
 </div></div>
 

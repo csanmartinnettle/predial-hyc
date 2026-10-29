@@ -4,7 +4,7 @@
    - Librerías externas (fuentes, Firebase, PDF): copia guardada primero. */
 const CACHE = "hyc-predial-v1";
 const SHELL = [
-  "./", "index.html", "styles.css", "app.css", "app.js", "firebase-config.js", "manifest.webmanifest",
+  "./", "index.html", "styles.css", "app.css", "app.js", "manifest.webmanifest",
   "icons/logo.png", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png", "icons/favicon-48.png"
 ];
 const CDN = [];
