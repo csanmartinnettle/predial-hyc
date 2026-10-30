@@ -544,4 +544,4 @@ if (!NATIVE) addEventListener("beforeinstallprompt", e => {
 $("installBtn").onclick = async () => { if (!deferredPrompt) return; deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt = null; $("installNote").hidden = true; };
 if (!NATIVE && isIOS && !standalone && !installDismissed) { $("installTxt").textContent = "Para instalarla: toca el botón Compartir de Safari y luego “Agregar a inicio”."; $("installNote").hidden = false; }
 $("installHide").onclick = () => { $("installNote").hidden = true; try { localStorage.setItem("hyc_install_ok", "1"); } catch (e) { } };
-if (!NATIVE && "serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => { });
+if (!NATIVE && "serviceWorker" in navigator) navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(r => r.update()).catch(() => { });
