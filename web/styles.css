@@ -171,3 +171,5 @@ a.btn{text-decoration:none}
 .qa-row{grid-template-columns:1fr;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .qa-row:last-child{border-bottom:0;padding-bottom:0}
 .qa-btns{justify-content:flex-start}
+
+.q-nota{min-height:64px;font-size:15px}

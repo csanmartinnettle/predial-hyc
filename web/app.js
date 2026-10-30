@@ -21,12 +21,13 @@ if (NATIVE) {
 const MAX_FOTOS = 8;
 const TERRENOS_INICIALES = ["Los Andes", "Suizos", "Reina Norte", "Batuco", "Lote G", "Talagante"];
 // Para cambiar las preguntas de todos los teléfonos: editar esta lista y subir la VERSION_PREGUNTAS.
-const VERSION_PREGUNTAS = 1;
+const VERSION_PREGUNTAS = 2;
 const PREGUNTAS_INICIALES = [
   { id: "cierre", texto: "Estado del cierre perimetral", tipo: "scale", lo: "Muy malo", hi: "Muy bueno", req: true },
   { id: "personas", texto: "Presencia de personas ajenas al terreno", tipo: "yn", req: true },
-  { id: "vandalismo", texto: "Vandalismo en terreno", tipo: "scale", lo: "Grave", hi: "Sin vandalismo", req: true },
-  { id: "animales", texto: "Presencia de animales no deseados", tipo: "scale", lo: "Muchos", hi: "Ninguno", req: true }
+  { id: "vandalismo", texto: "Vandalismo en terreno", tipo: "yn", nota: true, req: true },
+  { id: "animales", texto: "Presencia de animales no deseados", tipo: "yn", nota: true, req: true },
+  { id: "cuidador", texto: "Evaluación gestión cuidador", tipo: "scale", lo: "Muy mala", hi: "Muy buena", nota: true, notaLabel: "Comentarios", req: true }
 ];
 const SCALE_TXT = { 1: "Muy malo", 2: "Malo", 3: "Regular", 4: "Bueno", 5: "Muy bueno" };
 const CARPETA_PDF = "Predial HyC";
@@ -230,6 +231,13 @@ function renderSurvey() {
         const e = document.createElement("div"); e.className = "ends"; e.innerHTML = "<span></span><span></span>";
         e.firstChild.textContent = "1 · " + (q.lo || SCALE_TXT[1]); e.lastChild.textContent = (q.hi || SCALE_TXT[5]) + " · 5"; d.append(e);
       }
+      if (q.nota) {
+        const ta = document.createElement("textarea"); ta.id = "q_" + k + "_nota"; ta.className = "q-nota";
+        ta.placeholder = (q.notaLabel || "Observaciones") + " (opcional)"; ta.setAttribute("aria-label", (q.notaLabel || "Observaciones") + " sobre " + q.texto);
+        ta.value = S.draft.respuestas[k + "__nota"] || "";
+        ta.oninput = () => { S.draft.respuestas[k + "__nota"] = ta.value; saveDraft(); };
+        d.append(ta);
+      }
     }
     box.append(d);
   });
@@ -277,8 +285,11 @@ $("cancelSend").onclick = resetConfirm;
 $("doSend").textContent = "Confirmar";
 $("doSend").onclick = async () => {
   const lot = S.cur, d = S.draft;
-  const preguntas = activeQuestions().map(q => ({ id: String(q.id), texto: q.texto, tipo: q.tipo, lo: q.lo || "", hi: q.hi || "" }));
-  const respuestas = {}; for (const q of preguntas) if (d.respuestas[q.id] != null && d.respuestas[q.id] !== "") respuestas[q.id] = d.respuestas[q.id];
+  const preguntas = activeQuestions().map(q => ({ id: String(q.id), texto: q.texto, tipo: q.tipo, lo: q.lo || "", hi: q.hi || "", nota: !!q.nota, notaLabel: q.notaLabel || "" }));
+  const respuestas = {}; for (const q of preguntas) {
+    if (d.respuestas[q.id] != null && d.respuestas[q.id] !== "") respuestas[q.id] = d.respuestas[q.id];
+    const n = (d.respuestas[q.id + "__nota"] || "").trim(); if (q.nota && n) respuestas[q.id + "__nota"] = n;
+  }
   const fecha = new Date().toISOString();
   const base = repName({ fecha, terrenoNombre: lot.nombre });
   const usados = new Set(S.reportes.map(r => r.nombre));
@@ -371,6 +382,12 @@ async function buildPdf(r, fotos) {
     } else {
       const qt = pdf.splitTextToSize(`${i + 1}. ${q.texto}`, 120); pdf.text(qt, M, y);
       pdf.setFont("helvetica", "bold"); pdf.text(ansLong(q, v), W - M, y, { align: "right" }); y += 5 * (qt.length - 1);
+      const nota = r.respuestas?.[q.id + "__nota"];
+      if (nota) {
+        pdf.setFont("helvetica", "italic"); pdf.setTextColor(...grey);
+        for (const l of pdf.splitTextToSize((q.notaLabel || "Observaciones") + ": " + nota, W - 2 * M - 6)) { y += 5; if (y > 282) { pdf.addPage(); y = M; } pdf.text(l, M + 6, y); }
+        pdf.setTextColor(...navy);
+      }
     }
     y += 4; pdf.setDrawColor(235, 237, 231); pdf.line(M, y, W - M, y); y += 6;
   });
@@ -419,7 +436,7 @@ function shareText(r) {
   const L = ["*" + (r.nombre || repName(r)) + "*", "Reporte de visita a terreno · H&C Administración Predial", "", "Fecha: " + fmtDT(r.fecha)];
   if (r.autorNombre) L.push("Generado por: " + r.autorNombre);
   L.push("");
-  (r.preguntas || []).forEach((q, i) => L.push(`${i + 1}. ${q.texto}: ${ansLong(q, r.respuestas?.[q.id])}`));
+  (r.preguntas || []).forEach((q, i) => { L.push(`${i + 1}. ${q.texto}: ${ansLong(q, r.respuestas?.[q.id])}`); const n = r.respuestas?.[q.id + "__nota"]; if (n) L.push("   " + (q.notaLabel || "Observaciones") + ": " + n); });
   L.push("", "Observaciones: " + (r.obs || "Sin observaciones."), "Fotos: " + (r.nFotos || 0));
   return L.join("\n");
 }
@@ -500,7 +517,7 @@ function openQ(q) {
   editingQ = q || null;
   $("qSheetT").textContent = q ? "Editar pregunta" : "Nueva pregunta";
   $("qText").value = q?.texto || ""; $("qType").value = q?.tipo || "scale";
-  $("qLo").value = q?.lo || ""; $("qHi").value = q?.hi || ""; $("qReq").checked = q ? q.req !== false : true;
+  $("qLo").value = q?.lo || ""; $("qHi").value = q?.hi || ""; $("qReq").checked = q ? q.req !== false : true; $("qNota").checked = !!q?.nota;
   $("qEnds").hidden = $("qType").value !== "scale";
   $("qSheet").hidden = false; setTimeout(() => $("qText").focus(), 60);
 }
@@ -509,7 +526,7 @@ $("addQ").onclick = () => openQ(null);
 $("qCancel").onclick = () => { $("qSheet").hidden = true; };
 $("qForm").onsubmit = e => {
   e.preventDefault();
-  const f = { texto: $("qText").value.trim(), tipo: $("qType").value, lo: $("qLo").value.trim(), hi: $("qHi").value.trim(), req: $("qReq").checked };
+  const f = { texto: $("qText").value.trim(), tipo: $("qType").value, lo: $("qLo").value.trim(), hi: $("qHi").value.trim(), req: $("qReq").checked, nota: $("qNota").checked };
   if (!f.texto) return;
   if (editingQ) Object.assign(editingQ, f); else S.preguntas.push({ id: uid(), ...f, activa: true });
   $("qSheet").hidden = true; saveQ(); toast("Pregunta guardada en este teléfono.");
